@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>죽도시장 · 가격비교 프로토타입</title>
+<style>
+  :root {
+    --primary: #1D6FE0;
+    --primary-dark: #1558B0;
+    --bg-page: #EDEDED;
+    --text-main: #1C1C1E;
+    --text-sub: #8E8E93;
+    --green: #1F9254;
+    --green-bg: #E4F5EB;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    background: var(--bg-page);
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 40px 16px;
+  }
+  .phone {
+    width: 375px;
+    max-width: 100%;
+    background: #fff;
+    border-radius: 36px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    overflow: hidden;
+    border: 8px solid #111;
+    min-height: 700px;
+  }
+  .status-bar { height: 28px; background: var(--primary); }
+  .screen { display: none; }
+  .screen.active { display: block; animation: fadeIn 0.2s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateX(8px);} to { opacity: 1; transform: translateX(0);} }
+
+  .header {
+    background: var(--primary);
+    padding: 6px 20px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .header h1 { color: #fff; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+  .header .title-row { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+  .header .title-row span.txt {
+    color: #fff; font-size: 17px; font-weight: 700;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .icon-btn {
+    width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
+    color: #fff; opacity: 0.95; flex-shrink: 0; cursor: pointer; background: none; border: none;
+    font-size: 18px; line-height: 1;
+  }
+  .qr-btn {
+    display: flex; align-items: center; gap: 4px;
+    background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.5);
+    border-radius: 8px; padding: 5px 9px; color: #fff; font-size: 12px; font-weight: 700; cursor: pointer;
+  }
+  .header .like-icon-btn svg { stroke: rgba(255,255,255,0.85); }
+  .header .like-icon-btn.liked svg { stroke: #E11D48; fill: #E11D48; }
+
+  /* ---- Screen 1 ---- */
+  .search-wrap { padding: 0 20px; margin-top: -12px; }
+  .search-box {
+    background: #fff; border-radius: 14px; box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+    display: flex; align-items: center; gap: 8px; padding: 12px 14px;
+  }
+  .search-box svg { flex-shrink: 0; color: var(--text-sub); }
+  .search-box input { border: none; outline: none; font-size: 15px; width: 100%; color: var(--text-main); background: transparent; }
+  .search-box input::placeholder { color: #B5B5B9; }
+  .section { padding: 24px 20px 8px; }
+  .section-title { font-size: 15px; font-weight: 700; color: var(--text-main); margin-bottom: 12px; }
+  .list { display: flex; flex-direction: column; gap: 10px; padding: 0 20px 20px; }
+  .item {
+    display: flex; align-items: center; gap: 14px; background: #fff; border: 1px solid #F0F0F0;
+    border-radius: 14px; padding: 12px 14px; cursor: pointer; transition: background 0.15s ease;
+  }
+  .item:hover { background: #F2F7FE; }
+  .item:active { background: #E7F0FE; }
+  .item.static { cursor: default; }
+  .item.static:hover, .item.static:active { background: #fff; }
+  .thumb {
+    width: 52px; height: 52px; border-radius: 12px; background: linear-gradient(135deg, #BFD8FB, #8FB8F6); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 26px;
+  }
+  .thumb.store-thumb { background: linear-gradient(135deg, #E4E7EC, #C7CDD6); font-size: 24px; }
+  .item-info { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+  .item-name { font-size: 16px; font-weight: 700; color: var(--text-main); }
+  .item-tag { font-size: 12.5px; color: var(--text-sub); }
+  .empty-state { display: none; text-align: center; color: var(--text-sub); font-size: 14px; padding: 30px 20px; }
+  .bottom-space { height: 20px; }
+  .like-icon-btn {
+    background: none; border: none; cursor: pointer; padding: 6px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .like-icon-btn svg { width: 20px; height: 20px; stroke: #C7C9CC; fill: none; transition: all 0.15s ease; }
+  .like-icon-btn.liked svg { stroke: #E11D48; fill: #E11D48; }
+
+  /* ---- Screen 2 (filters) ---- */
+  .filter-section { padding: 20px 20px 4px; }
+  .filter-label { font-size: 13.5px; font-weight: 700; color: var(--text-main); margin-bottom: 10px; }
+  .chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
+  .chip {
+    padding: 8px 14px; border-radius: 20px; font-size: 13.5px; font-weight: 600;
+    border: 1px solid #E2E2E4; background: #fff; color: var(--text-main); cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .chip.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .sort-chip-row { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 20px 24px; }
+  .cta-wrap { padding: 4px 20px 28px; }
+  .cta-btn {
+    width: 100%; background: var(--primary); color: #fff; border: none; border-radius: 14px;
+    padding: 15px; font-size: 16px; font-weight: 800; cursor: pointer; transition: background 0.15s ease;
+  }
+  .cta-btn:hover { background: var(--primary-dark); }
+  .cta-btn.secondary { background: #fff; color: var(--primary); border: 1.5px solid var(--primary); }
+  .cta-btn.secondary:hover { background: #F2F7FE; }
+
+  /* ---- Screen 3 (price list) ---- */
+  .price-list { display: flex; flex-direction: column; gap: 10px; padding: 20px 20px 28px; }
+  .price-card {
+    display: flex; align-items: center; gap: 14px; background: #fff; border: 1px solid #F0F0F0;
+    border-radius: 14px; padding: 14px; cursor: pointer; transition: background 0.15s ease;
+  }
+  .price-card.clickable:hover { background: #F8FAFF; }
+  .price-card.clickable:active { background: #F0F5FF; }
+  .price-card.my-store { background: #E4EFFD; border: 1.5px solid var(--primary); }
+  .price-card.my-store.clickable:hover { background: #D6E7FC; }
+  .price-card.my-store.clickable:active { background: #C9DFFB; }
+  .my-store-badge {
+    display: inline-block; background: var(--primary); color: #fff; font-size: 11px; font-weight: 700;
+    padding: 2px 7px; border-radius: 6px; vertical-align: middle; margin-left: 2px;
+  }
+  .price-card .thumb { width: 56px; height: 56px; font-size: 28px; }
+  .price-info { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
+  .price-store { font-size: 15px; font-weight: 700; color: var(--text-main); }
+  .price-amount { font-size: 17px; font-weight: 800; color: var(--primary); }
+  .price-meta { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
+  .price-time { font-size: 12px; color: var(--text-sub); }
+  .note { padding: 0 20px 20px; font-size: 12px; color: var(--text-sub); text-align: center; }
+  .like-btn {
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    background: none; border: none; cursor: pointer; padding: 4px 6px; flex-shrink: 0;
+  }
+  .like-btn svg { width: 21px; height: 21px; stroke: #C7C9CC; fill: none; transition: all 0.15s ease; }
+  .like-btn .like-count { font-size: 12px; font-weight: 700; color: var(--text-sub); }
+  .like-btn.liked svg { stroke: #E11D48; fill: #E11D48; }
+  .like-btn.liked .like-count { color: #E11D48; }
+
+  /* ---- Screen 4 (가격 입력) ---- */
+  .form-pad { padding: 28px 20px 20px; }
+  .form-title { font-size: 18px; font-weight: 800; color: var(--text-main); margin-bottom: 8px; }
+  .form-sub { font-size: 13px; color: var(--text-sub); line-height: 1.5; margin-bottom: 24px; }
+  .form-label { font-size: 13.5px; font-weight: 700; color: var(--text-main); margin: 20px 0 10px; }
+  .pin-input, .price-input {
+    width: 100%; border: 1.5px solid #E2E2E4; border-radius: 12px; padding: 14px 16px;
+    font-size: 20px; font-weight: 700; letter-spacing: 4px; text-align: center;
+    color: var(--text-main); outline: none; font-family: inherit;
+  }
+  .price-input { letter-spacing: normal; text-align: left; font-size: 15px; font-weight: 600; }
+  .pin-input:focus, .price-input:focus { border-color: var(--primary); }
+  .pin-input::placeholder, .price-input::placeholder { color: #C7C9CC; }
+  .form-error {
+    display: none; font-size: 12.5px; color: #D92D20; margin-top: 8px;
+  }
+  .form-error.show { display: block; }
+  .store-chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .edit-btn {
+    flex-shrink: 0; background: var(--primary); color: #fff; border: none; border-radius: 8px;
+    padding: 8px 12px; font-size: 12.5px; font-weight: 700; cursor: pointer;
+  }
+  .edit-btn:hover { background: var(--primary-dark); }
+  .edit-btn.outline { background: #fff; color: var(--primary); border: 1.5px solid var(--primary); }
+  .price-stepper { display: flex; align-items: center; gap: 8px; }
+  .price-stepper .price-input { width: auto; flex: 1; min-width: 0; text-align: center; padding-left: 6px; padding-right: 6px; }
+  .stepper-btn {
+    flex-shrink: 0; border: 1.5px solid #E2E2E4; background: #fff; border-radius: 10px;
+    padding: 13px 12px; font-size: 13px; font-weight: 700; color: var(--text-main); cursor: pointer;
+  }
+  .stepper-btn:hover { background: #F2F7FE; }
+  .success-icon {
+    width: 56px; height: 56px; border-radius: 50%; background: var(--green-bg); color: var(--green);
+    font-size: 26px; font-weight: 800; display: flex; align-items: center; justify-content: center;
+    margin: 8px auto 20px;
+  }
+
+  /* ---- PIN hint & reviews ---- */
+  .cta-btn.accurate { background: var(--green); }
+  .cta-btn.accurate:hover { background: #187A44; }
+  .pin-hint { font-size: 11.5px; color: var(--text-sub); margin-top: 14px; text-align: center; line-height: 1.5; }
+  .review-row { margin-top: 8px; }
+  .review-chip {
+    display: inline-flex; align-items: center; gap: 4px; background: #F5F6F8; border: none;
+    border-radius: 8px; padding: 6px 10px; font-size: 11.5px; font-weight: 600; color: var(--text-sub); cursor: pointer;
+  }
+  .review-chip:hover { background: #ECEEF1; }
+  .review-textarea {
+    width: 100%; border: 1.5px solid #E2E2E4; border-radius: 12px; padding: 12px 14px;
+    font-size: 14px; font-family: inherit; resize: none; min-height: 70px; outline: none; color: var(--text-main);
+  }
+  .review-textarea:focus { border-color: var(--primary); }
+  .review-textarea::placeholder { color: #C7C9CC; }
+</style>
+</head>
+<body>
+
+  <div class="phone">
+    <div class="status-bar"></div>
+
+    <!-- SCREEN 1: 시장 검색 -->
+    <div class="screen active" id="screen1">
+      <div class="header">
+        <h1>죽도시장</h1>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div class="icon-btn" title="찜한 목록" onclick="openBookmarks()">🤍</div>
+          <div class="qr-btn" onclick="openPriceEntry()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0;">
+              <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+              <rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/>
+            </svg>
+            <span>가격 등록</span>
+          </div>
+        </div>
+      </div>
+      <div class="search-wrap">
+        <div class="search-box">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
+          <input id="searchInput" type="text" placeholder="물품이나 매장을 검색하세요 (예: 오징어, 동해수산)">
+        </div>
+      </div>
+      <div class="section"><div class="section-title">둘러보기</div></div>
+      <div class="list" id="itemList">
+        <div class="item" data-name="오징어">
+          <div class="thumb">🦑</div>
+          <div class="item-info"><div class="item-name">오징어</div><div class="item-tag">건어물 코너</div></div>
+          <button class="like-icon-btn" onclick="toggleItemLike(event, '오징어')"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.5s-7.6-4.4-10-9C.5 8 1.8 4 5.8 3.4c2.2-.3 4.2.8 6.2 3 2-2.2 4-3.3 6.2-3 4 .6 5.3 4.6 3.8 8.1-2.4 4.6-10 9-10 9z"/></svg></button>
+        </div>
+        <div class="item" data-name="대게">
+          <div class="thumb">🦀</div>
+          <div class="item-info"><div class="item-name">대게</div><div class="item-tag">수산물 코너</div></div>
+          <button class="like-icon-btn" onclick="toggleItemLike(event, '대게')"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.5s-7.6-4.4-10-9C.5 8 1.8 4 5.8 3.4c2.2-.3 4.2.8 6.2 3 2-2.2 4-3.3 6.2-3 4 .6 5.3 4.6 3.8 8.1-2.4 4.6-10 9-10 9z"/></svg></button>
+        </div>
+        <div class="item" data-name="과메기">
+          <div class="thumb">🐟</div>
+          <div class="item-info"><div class="item-name">과메기</div><div class="item-tag">건어물 코너</div></div>
+          <button class="like-icon-btn" onclick="toggleItemLike(event, '과메기')"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.5s-7.6-4.4-10-9C.5 8 1.8 4 5.8 3.4c2.2-.3 4.2.8 6.2 3 2-2.2 4-3.3 6.2-3 4 .6 5.3 4.6 3.8 8.1-2.4 4.6-10 9-10 9z"/></svg></button>
+        </div>
+        <div class="item" data-name="문어">
+          <div class="thumb">🐙</div>
+          <div class="item-info"><div class="item-name">문어</div><div class="item-tag">수산물 코너</div></div>
+          <button class="like-icon-btn" onclick="toggleItemLike(event, '문어')"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.5s-7.6-4.4-10-9C.5 8 1.8 4 5.8 3.4c2.2-.3 4.2.8 6.2 3 2-2.2 4-3.3 6.2-3 4 .6 5.3 4.6 3.8 8.1-2.4 4.6-10 9-10 9z"/></svg></button>
+        </div>
+      </div>
+      <div class="section" id="storeSectionHeader" style="display:none;"><div class="section-title">매장</div></div>
+      <div class="list" id="storeResultList"></div>
+      <div class="empty-state" id="emptyState">검색 결과가 없습니다</div>
+      <div class="bottom-space"></div>
+    </div>
+
+    <!-- SCREEN 2: 카테고리·정렬 선택 -->
+    <div class="screen" id="screen2">
+      <div class="header">
+        <div class="title-row">
+          <div class="icon-btn" onclick="goTo('screen1')" title="뒤로">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </div>
+          <span class="txt" id="s2Title">"오징어" 검색결과</span>
+        </div>
+      </div>
+
+      <div class="filter-section">
+        <div class="filter-label">가격대</div>
+        <div class="chip-row" id="priceChips">
+          <div class="chip active" data-val="전체">전체</div>
+          <div class="chip" data-val="1만원 이하">1만원 이하</div>
+          <div class="chip" data-val="1~3만원">1~3만원</div>
+          <div class="chip" data-val="3만원 이상">3만원 이상</div>
+        </div>
+
+        <div class="filter-label">정렬 기준</div>
+      </div>
+      <div class="sort-chip-row" id="sortChips">
+        <div class="chip sort-chip active" data-val="가격 낮은 순">가격 낮은 순 (기본)</div>
+        <div class="chip sort-chip" data-val="가격 높은 순">가격 높은 순</div>
+        <div class="chip sort-chip" data-val="인기순">인기순</div>
+        <div class="chip sort-chip" data-val="최신 업데이트순">최신 업데이트순</div>
+      </div>
+
+      <div class="cta-wrap">
+        <button class="cta-btn" onclick="openPriceList()">가격 목록 확인하기</button>
+      </div>
+    </div>
+
+    <!-- SCREEN 3: 시장에 대한 정보 (가격 목록) -->
+    <div class="screen" id="screen3">
+      <div class="header">
+        <div class="title-row">
+          <div class="icon-btn" onclick="backFromPriceList()" title="뒤로">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </div>
+          <span class="txt" id="s3Title">오징어 · 가격 낮은 순</span>
+        </div>
+      </div>
+      <div class="price-list" id="priceList"></div>
+      <div class="note">예시 데이터입니다 · 실제 가격이 아닙니다</div>
+    </div>
+
+    <!-- SCREEN 4: 가격 입력 (공용 PIN) -->
+    <div class="screen" id="screen4">
+      <div class="header">
+        <div class="title-row">
+          <div class="icon-btn" onclick="goTo('screen1')" title="뒤로">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </div>
+          <span class="txt">가격 입력</span>
+        </div>
+      </div>
+
+      <div id="pinStep">
+        <div class="form-pad">
+          <div class="form-title">오늘의 공용 PIN을 입력하세요</div>
+          <div class="form-sub">상인 전용 오픈채팅방 공지에서 매일 바뀌는 PIN을 확인하고 입력해주세요.</div>
+          <input id="pinInput" class="pin-input" type="text" inputmode="numeric" maxlength="4" placeholder="0000">
+          <div class="form-error" id="pinError">PIN은 숫자 4자리로 입력해주세요.</div>
+          <div class="pin-hint" id="pinHint"></div>
+        </div>
+        <div class="cta-wrap">
+          <button class="cta-btn" onclick="submitPin()">인증하기</button>
+        </div>
+      </div>
+
+      <div id="storeStep" style="display:none;">
+        <div class="form-pad" style="padding-bottom:12px;">
+          <div class="form-title">본인 가게를 선택하세요</div>
+        </div>
+        <div class="search-wrap" style="margin-top:0;">
+          <div class="search-box">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
+            <input id="storeSearchInput" type="text" placeholder="가게 이름을 검색하세요">
+          </div>
+        </div>
+        <div class="list" id="storeSearchResultList" style="padding-top:16px;"></div>
+      </div>
+
+      <div id="manageStep" style="display:none;">
+        <div class="form-pad" style="padding-bottom:8px;">
+          <div class="form-title" id="manageStoreTitle">매장 가격 관리</div>
+          <div class="form-sub" style="margin-bottom:0;">품목을 선택해 가격을 등록하거나 수정하세요.</div>
+        </div>
+        <div class="section" style="padding-top:20px;"><div class="section-title">등록된 품목</div></div>
+        <div class="list" id="registeredItemList"></div>
+        <div id="unregisteredHeader" class="section" style="display:none;"><div class="section-title">아직 등록 안 한 품목</div></div>
+        <div class="list" id="unregisteredItemList"></div>
+        <div class="cta-wrap">
+          <button class="cta-btn secondary" onclick="showEntryStep('storeStep')">다른 가게 선택</button>
+        </div>
+      </div>
+
+      <div id="editStep" style="display:none;">
+        <div class="form-pad">
+          <div class="form-title" id="editItemTitle">가격 입력</div>
+          <div class="form-label">가격 (원)</div>
+          <div class="price-stepper">
+            <button class="stepper-btn" onclick="adjustEditPrice(-1000)">−1,000</button>
+            <input id="editPriceInput" class="price-input" type="number" placeholder="예: 8000">
+            <button class="stepper-btn" onclick="adjustEditPrice(1000)">+1,000</button>
+          </div>
+          <div class="form-error" id="editPriceError">가격을 입력해주세요.</div>
+        </div>
+        <div class="cta-wrap">
+          <button class="cta-btn" onclick="confirmEditPrice()">확인</button>
+          <button class="cta-btn secondary" style="margin-top:10px;" onclick="showEntryStep('manageStep')">취소</button>
+        </div>
+      </div>
+
+      <div id="successStep" style="display:none;">
+        <div class="form-pad" style="text-align:center;">
+          <div class="success-icon">✓</div>
+          <div class="form-title">가격이 반영됐어요</div>
+          <div class="form-sub">방금 등록한 가격이 목록에 "방금 전"으로 표시돼요.</div>
+        </div>
+        <div class="cta-wrap">
+          <button class="cta-btn" onclick="comparePrices()">가격 비교하기</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCREEN 5: 매장 화면 -->
+    <div class="screen" id="screen5">
+      <div class="header">
+        <div class="title-row">
+          <div class="icon-btn" onclick="goTo(storeEntryScreen)" title="뒤로">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </div>
+          <span class="txt" id="storeTitle">매장</span>
+        </div>
+        <button class="icon-btn like-icon-btn" id="storeLikeBtn" onclick="toggleStoreLike(event, currentStore)"></button>
+      </div>
+      <div class="section"><div class="section-title">이 매장에서 파는 품목</div></div>
+      <div class="price-list" id="storeItemList"></div>
+      <div class="note">예시 데이터입니다 · 실제 매장 정보가 아닙니다</div>
+    </div>
+
+    <!-- SCREEN 6: 찜한 목록 -->
+    <div class="screen" id="screen6">
+      <div class="header">
+        <div class="title-row">
+          <div class="icon-btn" onclick="goTo('screen1')" title="뒤로">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </div>
+          <span class="txt">찜한 목록</span>
+        </div>
+      </div>
+      <div class="sort-chip-row" id="bookmarkTabs" style="padding-top:20px;">
+        <div class="chip bookmark-tab active" data-tab="store">찜한 가게</div>
+        <div class="chip bookmark-tab" data-tab="item">찜한 품목</div>
+      </div>
+      <div class="list" id="bookmarkList"></div>
+      <div class="empty-state" id="bookmarkEmpty">아직 찜한 항목이 없습니다</div>
+    </div>
+
+    <!-- SCREEN 7: 가격 리뷰 -->
+    <div class="screen" id="screen7">
+      <div class="header">
+        <div class="title-row">
+          <div class="icon-btn" onclick="backFromReviews()" title="뒤로">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </div>
+          <span class="txt" id="reviewTitle">리뷰</span>
+        </div>
+      </div>
+      <div class="section"><div class="section-title" id="reviewSummary">가격 리뷰</div></div>
+      <div class="list" id="reviewList" style="padding:0 20px 8px;"></div>
+      <div class="form-pad" style="padding-top:8px;">
+        <div class="form-label">이 가격, 실제와 같나요?</div>
+        <textarea id="reviewText" class="review-textarea" placeholder="(선택) 코멘트를 남겨주세요"></textarea>
+      </div>
+      <div class="cta-wrap" style="display:flex; gap:10px;">
+        <button class="cta-btn accurate" onclick="submitReview(true)">👍 정확해요</button>
+        <button class="cta-btn secondary" onclick="submitReview(false)">👎 달라요</button>
+      </div>
+      <div class="note">리뷰는 이 가격의 신뢰도를 다른 손님들에게 보여줘요</div>
+    </div>
+
+  </div>
+
+<script>
+  // ---------- Screen 1: search & browse ----------
+  const ITEM_EMOJI = { '오징어': '🦑', '대게': '🦀', '과메기': '🐟', '문어': '🐙' };
+  function getItemEmoji(name) { return ITEM_EMOJI[name] || '🐟'; }
+
+  const searchInput = document.getElementById('searchInput');
+  const items = Array.from(document.querySelectorAll('.item'));
+  const emptyState = document.getElementById('emptyState');
+  const storeSectionHeader = document.getElementById('storeSectionHeader');
+  const storeResultList = document.getElementById('storeResultList');
+
+  function getAllStoreNames() {
+    const set = new Set();
+    Object.values(priceData).forEach(entries => entries.forEach(e => set.add(e.store)));
+    return [...set];
+  }
+
+  searchInput.addEventListener('input', () => {
+    const q = searchInput.value.trim();
+    let visibleCount = 0;
+    items.forEach(item => {
+      const match = item.dataset.name.includes(q);
+      item.style.display = match ? 'flex' : 'none';
+      if (match) visibleCount++;
+    });
+
+    let storeMatches = [];
+    if (q) {
+      storeMatches = getAllStoreNames().filter(name => name.includes(q));
+    }
+    if (storeMatches.length > 0) {
+      storeSectionHeader.style.display = 'block';
+      storeResultList.innerHTML = storeMatches.map(name => `
+        <div class="item" onclick="viewStore('${name}', 'screen1')">
+          <div class="thumb store-thumb">🏪</div>
+          <div class="item-info"><div class="item-name">${name}</div><div class="item-tag">매장</div></div>
+          <button class="like-icon-btn ${isStoreLiked(name) ? 'liked' : ''}" onclick="toggleStoreLike(event, '${name}')">${heartIcon}</button>
+        </div>
+      `).join('');
+    } else {
+      storeSectionHeader.style.display = 'none';
+      storeResultList.innerHTML = '';
+    }
+
+    emptyState.style.display = (q && visibleCount === 0 && storeMatches.length === 0) ? 'block' : 'none';
+  });
+
+  searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const q = searchInput.value.trim();
+      const found = items.find(item => item.dataset.name === q);
+      if (found) openFilters(q);
+    }
+  });
+
+  items.forEach(item => {
+    item.addEventListener('click', () => openFilters(item.dataset.name));
+  });
+
+  function goTo(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  // ---------- Screen 2: filters ----------
+  let currentItem = '오징어';
+  let currentSort = '가격 낮은 순';
+  let currentStore = null;
+  let priceListOrigin = 'screen2';
+  let myStoreHighlight = null;
+
+  // ---------- 찜(북마크): 품목 & 매장 ----------
+  const likedItems = new Set();
+  const likedStores = new Set();
+
+  function isItemLiked(name) { return likedItems.has(name); }
+  function isStoreLiked(name) { return likedStores.has(name); }
+
+  function toggleItemLike(event, name) {
+    event.stopPropagation();
+    if (likedItems.has(name)) likedItems.delete(name); else likedItems.add(name);
+    event.currentTarget.classList.toggle('liked', likedItems.has(name));
+    if (document.getElementById('screen6').classList.contains('active')) renderBookmarkList();
+  }
+
+  function toggleStoreLike(event, name) {
+    event.stopPropagation();
+    if (!name) return;
+    if (likedStores.has(name)) likedStores.delete(name); else likedStores.add(name);
+    event.currentTarget.classList.toggle('liked', likedStores.has(name));
+    if (document.getElementById('screen6').classList.contains('active')) renderBookmarkList();
+  }
+
+  function openFilters(name) {
+    currentItem = name;
+    document.getElementById('s2Title').textContent = `"${name}" 검색결과`;
+    goTo('screen2');
+  }
+
+  function setupChipGroup(rowId) {
+    const row = document.getElementById(rowId);
+    row.querySelectorAll('.chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        row.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+      });
+    });
+  }
+  setupChipGroup('priceChips');
+
+  const sortChipRow = document.getElementById('sortChips');
+  function selectSort(label) {
+    currentSort = label;
+    sortChipRow.querySelectorAll('.sort-chip').forEach(c => {
+      c.classList.toggle('active', c.dataset.val === label);
+    });
+  }
+  sortChipRow.querySelectorAll('.sort-chip').forEach(chip => {
+    chip.addEventListener('click', () => selectSort(chip.dataset.val));
+  });
+
+  // ---------- Screen 3: price list ----------
+  const priceData = {
+    '오징어': [
+      { store: '동해수산', desc: '오징어 1마리', price: 8000, minutesAgo: 12, likes: 92,
+        reviews: [
+          { accurate: true, text: '오늘 가서 확인했어요, 딱 맞아요', minutesAgo: 30 },
+          { accurate: true, text: '', minutesAgo: 200 },
+          { accurate: false, text: '어제는 7000원이었는데 올랐네요', minutesAgo: 500 }
+        ] },
+      { store: '청호상회', desc: '오징어 1마리', price: 9000, minutesAgo: 180, likes: 74,
+        reviews: [ { accurate: true, text: '', minutesAgo: 250 } ] },
+      { store: '바다마트', desc: '오징어 1마리', price: 11000, minutesAgo: 1440, likes: 55, reviews: [] }
+    ],
+    '대게': [
+      { store: '동해수산', desc: '대게 1kg', price: 32000, minutesAgo: 40, likes: 88,
+        reviews: [ { accurate: true, text: '방금 사왔어요, 정확합니다', minutesAgo: 45 } ] },
+      { store: '바다마트', desc: '대게 1kg', price: 35000, minutesAgo: 300, likes: 63,
+        reviews: [ { accurate: false, text: '가서 물어보니 4만원 부르던데요', minutesAgo: 100 } ] },
+      { store: '항구수산', desc: '대게 1kg', price: 38000, minutesAgo: 720, likes: 47, reviews: [] }
+    ],
+    '과메기': [
+      { store: '청호상회', desc: '과메기 1인분', price: 7000, minutesAgo: 25, likes: 80,
+        reviews: [ { accurate: true, text: '', minutesAgo: 60 } ] },
+      { store: '동해수산', desc: '과메기 1인분', price: 7500, minutesAgo: 150, likes: 69, reviews: [] },
+      { store: '항구수산', desc: '과메기 1인분', price: 8500, minutesAgo: 900, likes: 50, reviews: [] }
+    ],
+    '문어': [
+      { store: '바다마트', desc: '문어 1마리', price: 15000, minutesAgo: 20, likes: 90,
+        reviews: [ { accurate: true, text: '싱싱하고 가격도 맞아요', minutesAgo: 40 } ] },
+      { store: '동해수산', desc: '문어 1마리', price: 16000, minutesAgo: 210, likes: 71, reviews: [] },
+      { store: '청호상회', desc: '문어 1마리', price: 18000, minutesAgo: 1200, likes: 58, reviews: [] }
+    ]
+  };
+
+  function formatTime(mins) {
+    if (mins === 0) return '방금 전';
+    if (mins < 60) return `${mins}분 전`;
+    if (mins < 1440) return `${Math.floor(mins / 60)}시간 전`;
+    return `${Math.floor(mins / 1440)}일 전`;
+  }
+
+  function openPriceList(origin) {
+    priceListOrigin = origin || 'screen2';
+    document.getElementById('s3Title').textContent = `${currentItem} · ${currentSort}`;
+    renderPriceList();
+    goTo('screen3');
+  }
+
+  function backFromPriceList() {
+    if (priceListOrigin === 'screen4') {
+      renderManageStep();
+      showEntryStep('manageStep');
+      goTo('screen4');
+    } else {
+      goTo('screen2');
+    }
+  }
+
+  let renderedPriceData = [];
+  const heartIcon = `<svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.5s-7.6-4.4-10-9C.5 8 1.8 4 5.8 3.4c2.2-.3 4.2.8 6.2 3 2-2.2 4-3.3 6.2-3 4 .6 5.3 4.6 3.8 8.1-2.4 4.6-10 9-10 9z"/></svg>`;
+
+  function renderPriceList() {
+    const data = (priceData[currentItem] || []).slice();
+    if (currentSort === '가격 낮은 순') data.sort((a, b) => a.price - b.price);
+    else if (currentSort === '가격 높은 순') data.sort((a, b) => b.price - a.price);
+    else if (currentSort === '인기순') data.sort((a, b) => b.likes - a.likes);
+    else if (currentSort === '최신 업데이트순') data.sort((a, b) => a.minutesAgo - b.minutesAgo);
+
+    renderedPriceData = data;
+    const listEl = document.getElementById('priceList');
+    if (data.length === 0) {
+      listEl.innerHTML = `<div class="empty-state" style="display:block;">아직 등록된 가격이 없습니다</div>`;
+      return;
+    }
+    listEl.innerHTML = data.map((d, idx) => {
+      const isMine = priceListOrigin === 'screen4' && d.store === myStoreHighlight;
+      const reviews = d.reviews || [];
+      const accCount = reviews.filter(r => r.accurate).length;
+      const inaccCount = reviews.filter(r => !r.accurate).length;
+      return `
+      <div class="price-card clickable ${isMine ? 'my-store' : ''}" onclick="openStore(${idx})">
+        <div class="thumb">${getItemEmoji(currentItem)}</div>
+        <div class="price-info">
+          <div class="price-store">${d.store} ${d.desc}${isMine ? ' <span class="my-store-badge">내 가게</span>' : ''}</div>
+          <div class="price-amount">${d.price.toLocaleString()}원</div>
+          <div class="price-meta">
+            <span class="price-time">${formatTime(d.minutesAgo)}</span>
+          </div>
+          <div class="review-row">
+            <button class="review-chip" onclick="event.stopPropagation(); openReviews('${currentItem}', '${d.store}', 'screen3')">👍 ${accCount} · 👎 ${inaccCount} · 리뷰 남기기</button>
+          </div>
+        </div>
+        <button class="like-btn ${d.liked ? 'liked' : ''}" onclick="toggleLike(event, ${idx})">
+          ${heartIcon}
+          <span class="like-count">${d.likes}</span>
+        </button>
+      </div>
+    `;
+    }).join('');
+  }
+
+  function toggleLike(event, idx) {
+    event.stopPropagation();
+    const entry = renderedPriceData[idx];
+    if (!entry) return;
+    entry.liked = !entry.liked;
+    entry.likes += entry.liked ? 1 : -1;
+    const btn = event.currentTarget;
+    btn.classList.toggle('liked', entry.liked);
+    btn.querySelector('.like-count').textContent = entry.likes;
+  }
+
+  let storeEntryScreen = 'screen3';
+
+  function openStore(idx) {
+    const entry = renderedPriceData[idx];
+    if (!entry) return;
+    currentStore = entry.store;
+    storeEntryScreen = 'screen3';
+    renderStoreScreen();
+    goTo('screen5');
+  }
+
+  function viewStore(name, origin) {
+    currentStore = name;
+    storeEntryScreen = origin;
+    renderStoreScreen();
+    goTo('screen5');
+  }
+
+  function renderStoreScreen() {
+    document.getElementById('storeTitle').textContent = currentStore;
+    const storeLikeBtn = document.getElementById('storeLikeBtn');
+    storeLikeBtn.innerHTML = heartIcon;
+    storeLikeBtn.classList.toggle('liked', isStoreLiked(currentStore));
+    storeLikeBtn.setAttribute('onclick', `toggleStoreLike(event, '${currentStore}')`);
+
+    const rows = [];
+    Object.keys(priceData).forEach(itemName => {
+      (priceData[itemName] || []).forEach(entry => {
+        if (entry.store === currentStore) rows.push({ itemName, ...entry });
+      });
+    });
+    const listEl = document.getElementById('storeItemList');
+    if (rows.length === 0) {
+      listEl.innerHTML = `<div class="empty-state" style="display:block;">등록된 품목이 없습니다</div>`;
+      return;
+    }
+    listEl.innerHTML = rows.map(r => {
+      const reviews = r.reviews || [];
+      const accCount = reviews.filter(rv => rv.accurate).length;
+      const inaccCount = reviews.filter(rv => !rv.accurate).length;
+      return `
+      <div class="price-card">
+        <div class="thumb">${getItemEmoji(r.itemName)}</div>
+        <div class="price-info">
+          <div class="price-store">${r.itemName} · ${r.desc}</div>
+          <div class="price-amount">${r.price.toLocaleString()}원</div>
+          <div class="price-meta">
+            <span class="price-time">${formatTime(r.minutesAgo)}</span>
+          </div>
+          <div class="review-row">
+            <button class="review-chip" onclick="openReviews('${r.itemName}', '${currentStore}', 'screen5')">👍 ${accCount} · 👎 ${inaccCount} · 리뷰 남기기</button>
+          </div>
+        </div>
+      </div>
+    `;
+    }).join('');
+  }
+
+  // ---------- Screen 4: 가격 입력 (공용 PIN) ----------
+  const ITEM_DESC = { '오징어': '오징어 1마리', '대게': '대게 1kg', '과메기': '과메기 1인분', '문어': '문어 1마리' };
+  let selectedItem = null;
+  let selectedStore = null;
+
+  const ENTRY_STEPS = ['pinStep', 'storeStep', 'manageStep', 'editStep', 'successStep'];
+  function showEntryStep(id) {
+    ENTRY_STEPS.forEach(s => {
+      document.getElementById(s).style.display = (s === id) ? 'block' : 'none';
+    });
+  }
+
+  function openPriceEntry() {
+    document.getElementById('pinInput').value = '';
+    document.getElementById('pinError').classList.remove('show');
+    document.getElementById('pinHint').textContent = `(테스트용) 오늘의 PIN: ${getTodayPin()} — 실제 서비스에서는 오픈채팅방 공지에서 확인`;
+    selectedItem = null;
+    selectedStore = null;
+    showEntryStep('pinStep');
+    goTo('screen4');
+  }
+
+  function getTodayPin() {
+    const today = new Date();
+    const dateStr = `${today.getFullYear()}${today.getMonth() + 1}${today.getDate()}`;
+    let hash = 0;
+    for (let i = 0; i < dateStr.length; i++) hash = (hash * 31 + dateStr.charCodeAt(i)) >>> 0;
+    return String(hash % 10000).padStart(4, '0');
+  }
+
+  function submitPin() {
+    const val = document.getElementById('pinInput').value.trim();
+    const errorEl = document.getElementById('pinError');
+    if (!/^\d{4}$/.test(val)) {
+      errorEl.textContent = 'PIN은 숫자 4자리로 입력해주세요.';
+      errorEl.classList.add('show');
+      return;
+    }
+    if (val !== getTodayPin()) {
+      errorEl.textContent = 'PIN이 올바르지 않습니다. 오픈채팅방 공지를 다시 확인해주세요.';
+      errorEl.classList.add('show');
+      return;
+    }
+    errorEl.classList.remove('show');
+    document.getElementById('storeSearchInput').value = '';
+    renderStoreStepResults('');
+    showEntryStep('storeStep');
+  }
+
+  function renderStoreStepResults(query) {
+    const stores = getAllStoreNames().filter(name => name.includes(query));
+    const listEl = document.getElementById('storeSearchResultList');
+    if (stores.length === 0) {
+      listEl.innerHTML = `<div class="empty-state" style="display:block;">일치하는 가게가 없습니다</div>`;
+      return;
+    }
+    listEl.innerHTML = stores.map(name => `
+      <div class="item" onclick="selectEntryStore('${name}')">
+        <div class="thumb store-thumb">🏪</div>
+        <div class="item-info"><div class="item-name">${name}</div><div class="item-tag">매장</div></div>
+      </div>
+    `).join('');
+  }
+
+  document.getElementById('storeSearchInput').addEventListener('input', (e) => {
+    renderStoreStepResults(e.target.value.trim());
+  });
+
+  function selectEntryStore(name) {
+    selectedStore = name;
+    renderManageStep();
+    showEntryStep('manageStep');
+  }
+
+  function renderManageStep() {
+    document.getElementById('manageStoreTitle').textContent = `${selectedStore} · 가격 관리`;
+    const registered = [];
+    const unregistered = [];
+    Object.keys(priceData).forEach(itemName => {
+      const entry = (priceData[itemName] || []).find(e => e.store === selectedStore);
+      if (entry) registered.push({ itemName, ...entry });
+      else unregistered.push(itemName);
+    });
+
+    const registeredList = document.getElementById('registeredItemList');
+    if (registered.length === 0) {
+      registeredList.innerHTML = `<div class="empty-state" style="display:block;">등록한 가격이 없습니다</div>`;
+    } else {
+      registeredList.innerHTML = registered.map(r => `
+        <div class="item static">
+          <div class="thumb">${getItemEmoji(r.itemName)}</div>
+          <div class="item-info"><div class="item-name">${r.itemName}</div><div class="item-tag">${r.price.toLocaleString()}원 · ${formatTime(r.minutesAgo)}</div></div>
+          <button class="edit-btn" onclick="openEditItem('${r.itemName}')">수정하기</button>
+        </div>
+      `).join('');
+    }
+
+    const unregHeader = document.getElementById('unregisteredHeader');
+    const unregList = document.getElementById('unregisteredItemList');
+    if (unregistered.length === 0) {
+      unregHeader.style.display = 'none';
+      unregList.innerHTML = '';
+    } else {
+      unregHeader.style.display = 'block';
+      unregList.innerHTML = unregistered.map(name => `
+        <div class="item static">
+          <div class="thumb">${getItemEmoji(name)}</div>
+          <div class="item-info"><div class="item-name">${name}</div><div class="item-tag">가격 미등록</div></div>
+          <button class="edit-btn outline" onclick="openEditItem('${name}')">등록하기</button>
+        </div>
+      `).join('');
+    }
+  }
+
+  function openEditItem(itemName) {
+    selectedItem = itemName;
+    const existing = (priceData[itemName] || []).find(e => e.store === selectedStore);
+    document.getElementById('editItemTitle').textContent = existing ? `${itemName} 가격 수정` : `${itemName} 가격 등록`;
+    document.getElementById('editPriceInput').value = existing ? existing.price : '';
+    document.getElementById('editPriceError').classList.remove('show');
+    showEntryStep('editStep');
+  }
+
+  function adjustEditPrice(delta) {
+    const input = document.getElementById('editPriceInput');
+    const val = Math.max(0, (parseInt(input.value, 10) || 0) + delta);
+    input.value = val;
+  }
+
+  function confirmEditPrice() {
+    const priceVal = parseInt(document.getElementById('editPriceInput').value, 10);
+    const errorEl = document.getElementById('editPriceError');
+    if (!priceVal || priceVal <= 0) {
+      errorEl.classList.add('show');
+      return;
+    }
+    errorEl.classList.remove('show');
+    if (!priceData[selectedItem]) priceData[selectedItem] = [];
+    // 같은 매장이 이미 등록한 가격이 있으면 지우고 새 가격으로 교체 (중복 방지)
+    priceData[selectedItem] = priceData[selectedItem].filter(e => e.store !== selectedStore);
+    priceData[selectedItem].push({
+      store: selectedStore,
+      desc: ITEM_DESC[selectedItem] || selectedItem,
+      price: priceVal,
+      minutesAgo: 0,
+      likes: 0
+    });
+    showEntryStep('successStep');
+  }
+
+  function comparePrices() {
+    currentItem = selectedItem;
+    currentSort = '가격 낮은 순';
+    selectSort('가격 낮은 순');
+    myStoreHighlight = selectedStore;
+    openPriceList('screen4');
+  }
+
+  // ---------- Screen 6: 찜한 목록 ----------
+  let bookmarkTab = 'store';
+
+  const bookmarkTabRow = document.getElementById('bookmarkTabs');
+  bookmarkTabRow.querySelectorAll('.bookmark-tab').forEach(chip => {
+    chip.addEventListener('click', () => selectBookmarkTab(chip.dataset.tab));
+  });
+
+  function selectBookmarkTab(tab) {
+    bookmarkTab = tab;
+    bookmarkTabRow.querySelectorAll('.bookmark-tab').forEach(c => {
+      c.classList.toggle('active', c.dataset.tab === tab);
+    });
+    renderBookmarkList();
+  }
+
+  function openBookmarks() {
+    bookmarkTab = 'store';
+    bookmarkTabRow.querySelectorAll('.bookmark-tab').forEach(c => {
+      c.classList.toggle('active', c.dataset.tab === 'store');
+    });
+    renderBookmarkList();
+    goTo('screen6');
+  }
+
+  function renderBookmarkList() {
+    const listEl = document.getElementById('bookmarkList');
+    const emptyEl = document.getElementById('bookmarkEmpty');
+    const names = bookmarkTab === 'store' ? [...likedStores] : [...likedItems];
+
+    if (names.length === 0) {
+      listEl.innerHTML = '';
+      emptyEl.style.display = 'block';
+      return;
+    }
+    emptyEl.style.display = 'none';
+
+    if (bookmarkTab === 'store') {
+      listEl.innerHTML = names.map(name => `
+        <div class="item" onclick="viewStore('${name}', 'screen6')">
+          <div class="thumb store-thumb">🏪</div>
+          <div class="item-info"><div class="item-name">${name}</div><div class="item-tag">매장</div></div>
+          <button class="like-icon-btn liked" onclick="toggleStoreLike(event, '${name}')">${heartIcon}</button>
+        </div>
+      `).join('');
+    } else {
+      listEl.innerHTML = names.map(name => `
+        <div class="item" onclick="openFilters('${name}')">
+          <div class="thumb">${getItemEmoji(name)}</div>
+          <div class="item-info"><div class="item-name">${name}</div><div class="item-tag">품목</div></div>
+          <button class="like-icon-btn liked" onclick="toggleItemLike(event, '${name}')">${heartIcon}</button>
+        </div>
+      `).join('');
+    }
+  }
+
+  // ---------- Screen 7: 가격 리뷰 ----------
+  let reviewOrigin = 'screen3';
+  let reviewItemName = null;
+  let reviewStoreName = null;
+
+  function findEntry(itemName, storeName) {
+    return (priceData[itemName] || []).find(e => e.store === storeName);
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str || '';
+    return div.innerHTML;
+  }
+
+  function openReviews(itemName, storeName, origin) {
+    reviewItemName = itemName;
+    reviewStoreName = storeName;
+    reviewOrigin = origin;
+    document.getElementById('reviewText').value = '';
+    renderReviewScreen();
+    goTo('screen7');
+  }
+
+  function renderReviewScreen() {
+    const entry = findEntry(reviewItemName, reviewStoreName);
+    if (!entry) return;
+    if (!entry.reviews) entry.reviews = [];
+    document.getElementById('reviewTitle').textContent = `${reviewStoreName} · ${entry.desc}`;
+    const accCount = entry.reviews.filter(r => r.accurate).length;
+    const inaccCount = entry.reviews.filter(r => !r.accurate).length;
+    document.getElementById('reviewSummary').textContent = `현재 가격 ${entry.price.toLocaleString()}원 · 👍 ${accCount} · 👎 ${inaccCount}`;
+
+    const listEl = document.getElementById('reviewList');
+    if (entry.reviews.length === 0) {
+      listEl.innerHTML = `<div class="empty-state" style="display:block;">아직 리뷰가 없습니다</div>`;
+      return;
+    }
+    listEl.innerHTML = entry.reviews.slice().sort((a, b) => a.minutesAgo - b.minutesAgo).map(r => `
+      <div class="item static">
+        <div class="thumb" style="font-size:20px;">${r.accurate ? '👍' : '👎'}</div>
+        <div class="item-info">
+          <div class="item-name" style="font-size:14px;">${r.accurate ? '정확해요' : '가격이 달라요'}</div>
+          ${r.text ? `<div class="item-tag">${escapeHtml(r.text)}</div>` : ''}
+        </div>
+        <div class="item-tag" style="flex-shrink:0; white-space:nowrap;">${formatTime(r.minutesAgo)}</div>
+      </div>
+    `).join('');
+  }
+
+  function submitReview(accurate) {
+    const entry = findEntry(reviewItemName, reviewStoreName);
+    if (!entry) return;
+    if (!entry.reviews) entry.reviews = [];
+    const text = document.getElementById('reviewText').value.trim();
+    entry.reviews.push({ accurate, text, minutesAgo: 0 });
+    document.getElementById('reviewText').value = '';
+    renderReviewScreen();
+    if (reviewOrigin === 'screen3') renderPriceList();
+    else if (reviewOrigin === 'screen5') renderStoreScreen();
+  }
+
+  function backFromReviews() {
+    goTo(reviewOrigin);
+  }
+</script>
+
+</body>
+</html>
