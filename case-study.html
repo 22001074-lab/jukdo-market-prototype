@@ -211,13 +211,12 @@
 <div class="wrap">
 
   <header>
-    <div class="eyebrow">케이스 스터디 · Four항</div>
+    <div class="eyebrow">케이스 스터디</div>
     <h1>죽도시장 가격비교 프로토타입</h1>
     <p class="subtitle">관광객이 죽도시장에서 합리적인 가격에 물건을 살 수 있도록, 상인의 실시간 가격 등록과 손님의 리뷰로 신뢰를 쌓는 가격비교 서비스를 기획부터 35회 이상의 반복 개발까지 끌고 온 기록입니다.</p>
     <div class="meta-row">
-      <span class="meta-item">📍 <strong>경북 포항 죽도시장</strong></span>
-      <span class="meta-item">🗓 <strong>2026.08</strong> · 지역혁신프로젝트 6강</span>
-      <span class="meta-item">👥 <strong>한대성 · 배예령 · 마수현 · 김민성 · 준호</strong></span>
+      <span class="meta-item">🧭 <strong>지역혁신프로젝트</strong> 팀 과제</span>
+      <span class="meta-item">👥 <strong>5인 팀</strong> 프로젝트</span>
     </div>
     <div class="cta-row">
       <a class="btn primary" href="https://22001074-lab.github.io/jukdo-market-prototype/" target="_blank" rel="noopener">라이브 데모 열기 →</a>
@@ -238,7 +237,7 @@
 
   <section>
     <h2>문제 — 왜 시작했나</h2>
-    <p class="lede">"20대 관광객 배예령씨는 시장에 갈 때 상품들의 가격을 제대로 알지 못하는 상태로 가는 것이 불편하다."</p>
+    <p class="lede">"20대 관광객은 시장에 갈 때 상품들의 가격을 제대로 알지 못하는 상태로 가는 것이 불편하다."</p>
     <p>전통시장에서는 같은 품목이라도 매대마다 가격이 다르고, 관광객이 그 자리에서 "이 가격이 정상인가?"를 확인할 방법이 없습니다. 이 프로토타입은 이 한 문장의 불편에서 출발했습니다.</p>
   </section>
 
@@ -254,33 +253,33 @@
   </section>
 
   <section>
-    <h2>팀 협업 — 6강 고도화 우선순위표</h2>
+    <h2>팀 협업 — 고도화 우선순위표</h2>
     <p class="lede">"기준 없이 고치면 색상만 종일 만집니다. 필수부터 처리합니다." — 팀이 정한 원칙대로, 개선 항목을 필수/사용성/나중으로 나누고 담당을 명확히 나눠 처리했습니다.</p>
     <div class="feature-grid">
       <div class="feature-card">
         <span class="ftag">필수</span>
         <h3>kg당 가격 표시로 전환</h3>
-        <p>단순 총액 대신 kg당 단가로 바꿔 실제 시세 비교가 가능하게 함 — 담당 한대성</p>
+        <p>단순 총액 대신 kg당 단가로 바꿔 실제 시세 비교가 가능하게 함</p>
       </div>
       <div class="feature-card">
         <span class="ftag">필수</span>
         <h3>"폰 속의 폰" 어색함 수정</h3>
-        <p>실제 모바일 브라우저에서 폰 목업 틀 없이 화면 전체를 꽉 채우도록 개선 — 담당 배예령</p>
+        <p>실제 모바일 브라우저에서 폰 목업 틀 없이 화면 전체를 꽉 채우도록 개선</p>
       </div>
       <div class="feature-card">
         <span class="ftag">사용성</span>
         <h3>택배 가능 여부 표시</h3>
-        <p>매장별 택배 가능 여부를 필터·상세 정보에 노출 — 담당 마수현</p>
+        <p>매장별 택배 가능 여부를 필터·상세 정보에 노출</p>
       </div>
       <div class="feature-card">
         <span class="ftag">사용성</span>
         <h3>리뷰 버튼 중복 클릭 방지</h3>
-        <p>"가격 맞아요/달라요" 버튼의 중복 투표를 막아 데이터 신뢰도를 지킴 — 담당 김민성</p>
+        <p>"가격 맞아요/달라요" 버튼의 중복 투표를 막아 데이터 신뢰도를 지킴</p>
       </div>
       <div class="feature-card">
         <span class="ftag">사용성</span>
         <h3>4개 언어 지원</h3>
-        <p>한국어·영어·중국어·일본어 UI를 추가해 외국인 관광객 접근성을 높임 — 담당 준호</p>
+        <p>한국어·영어·중국어·일본어 UI를 추가해 외국인 관광객 접근성을 높임</p>
       </div>
     </div>
   </section>
@@ -442,7 +441,7 @@
         <span class="sev low">낮음</span>
         <div class="issue-body">
           <h3>환율 환산 고정값 · 백엔드 미연동</h3>
-          <p>원화→환율 환산이 2026년 8월 기준 고정값이고, PIN·리뷰·가격 데이터는 새로고침 시 초기화되는 세션 메모리 상태 — 실서비스 전환에는 환율 API와 백엔드 연동이 필요함.</p>
+          <p>원화→환율 환산이 특정 시점 기준 고정값이고, PIN·리뷰·가격 데이터는 새로고침 시 초기화되는 세션 메모리 상태 — 실서비스 전환에는 환율 API와 백엔드 연동이 필요함.</p>
         </div>
       </div>
       <div class="issue">
