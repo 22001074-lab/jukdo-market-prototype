@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>죽도시장 프로토타입 포트폴리오</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700;900&family=Noto+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #F0EAE0;
+    --card: #FFFFFF;
+    --ink: #1F2937;
+    --ink-soft: #5B5348;
+    --navy: #14233A;
+    --accent: #FF6B2C;
+    --accent-deep: #C8501E;
+    --sea: #2563A6;
+    --line: #D9CFBE;
+    --good: #1F9254;
+    --good-bg: #E4F5EB;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #1A1714; --card: #24201B; --ink: #EDE7DC; --ink-soft: #B8AE9C;
+      --navy: #EDE7DC; --accent: #FF8A54; --accent-deep: #FFA878; --sea: #6FA8E0;
+      --line: #3A342C; --good: #4FCB8A; --good-bg: #163024;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #1A1714; --card: #24201B; --ink: #EDE7DC; --ink-soft: #B8AE9C;
+    --navy: #EDE7DC; --accent: #FF8A54; --accent-deep: #FFA878; --sea: #6FA8E0;
+    --line: #3A342C; --good: #4FCB8A; --good-bg: #163024;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--paper); color: var(--ink);
+    font-family: "Noto Sans KR", "Malgun Gothic", sans-serif; line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 64px 24px 100px; }
+  a { color: var(--sea); }
+  a:focus-visible, button:focus-visible { outline: 2.5px solid var(--sea); outline-offset: 3px; border-radius: 3px; }
+
+  /* ---- ① 한 줄 소개 ---- */
+  h1 {
+    font-family: "Noto Serif KR", serif; font-weight: 900; color: var(--navy);
+    font-size: clamp(26px, 5vw, 36px); line-height: 1.4; letter-spacing: -0.01em;
+    text-wrap: balance; margin: 0 0 32px;
+  }
+
+  /* ---- ② 서비스 보러가기 버튼 ---- */
+  .cta-btn {
+    display: inline-flex; align-items: center; gap: 8px; text-decoration: none;
+    font-size: 16px; font-weight: 700; padding: 15px 26px; border-radius: 12px;
+    background: var(--accent); color: #fff; transition: transform 0.12s ease, background 0.12s ease;
+    margin-bottom: 52px;
+  }
+  .cta-btn:hover { background: var(--accent-deep); transform: translateY(-1px); }
+
+  section { margin: 48px 0; }
+  h2 {
+    font-family: "Noto Serif KR", serif; font-weight: 700; color: var(--navy);
+    font-size: 21px; margin: 0 0 16px; text-wrap: balance;
+    display: flex; align-items: center; gap: 10px;
+  }
+  h2 .num {
+    font-family: "IBM Plex Mono", monospace; font-size: 13px; font-weight: 600;
+    color: var(--accent-deep); background: color-mix(in srgb, var(--accent) 12%, transparent);
+    padding: 3px 9px; border-radius: 999px; flex-shrink: 0;
+  }
+  p { margin: 0 0 14px; max-width: 66ch; }
+  .lede { font-size: 15.5px; color: var(--ink-soft); }
+
+  .card {
+    background: var(--card); border: 1.5px solid var(--line); border-radius: 12px;
+    padding: 18px 20px; margin-bottom: 10px;
+  }
+  .card h3 { font-size: 15px; font-weight: 700; margin: 0 0 6px; color: var(--ink); }
+  .card p { font-size: 14px; color: var(--ink-soft); margin: 0; max-width: none; }
+
+  .flow-list { display: flex; flex-direction: column; gap: 10px; margin: 18px 0 0; }
+  .flow-item { display: flex; gap: 12px; align-items: flex-start; }
+  .flow-item .flow-num {
+    flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; background: var(--navy); color: var(--paper);
+    font-family: "IBM Plex Mono", monospace; font-size: 12px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; margin-top: 1px;
+  }
+  .flow-item p { margin: 0; font-size: 14.5px; }
+  .flow-item strong { color: var(--ink); }
+
+  .quote {
+    border-left: 3px solid var(--accent); padding: 4px 0 4px 16px; margin: 0 0 16px;
+    font-size: 15px; color: var(--ink-soft); font-style: italic;
+  }
+
+  .stat-strip {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 16px;
+    background: var(--card); border: 1.5px solid var(--line); border-radius: 14px; padding: 20px 22px; margin: 18px 0 0;
+  }
+  .stat-strip .num-lg {
+    font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums;
+    font-size: 24px; font-weight: 600; color: var(--navy); display: block; line-height: 1.1;
+  }
+  .stat-strip .label { font-size: 12px; color: var(--ink-soft); margin-top: 4px; }
+
+  .example-box {
+    background: var(--good-bg); border: 1.5px solid color-mix(in srgb, var(--good) 35%, transparent);
+    border-radius: 12px; padding: 16px 18px; margin-top: 14px; font-size: 14px;
+  }
+  .example-box strong { color: var(--good); }
+
+  .foot-note { margin-top: 40px; font-size: 12.5px; color: var(--ink-soft); text-align: center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ① 한 줄 소개 -->
+  <h1>죽도시장 관광객을 위해 실시간 가격 비교 서비스를 통해 가장 합리적인 매장을 찾아주는 AI 서비스</h1>
+
+  <!-- ② 서비스 보러가기 버튼 -->
+  <a class="cta-btn" href="https://22001074-lab.github.io/jukdo-market-prototype/" target="_blank" rel="noopener">서비스 보러가기 →</a>
+
+  <!-- ③ 문제 -->
+  <section>
+    <h2><span class="num">01</span>문제</h2>
+    <p class="quote">"20대 관광객은 시장에 갈 때 상품들의 가격을 제대로 알지 못하는 상태로 가는 것이 불편하다."</p>
+    <p>전통시장에서는 같은 품목이라도 매대마다 가격이 다르고, 관광객이 그 자리에서 "이 가격이 정상인가?"를 확인할 방법이 없습니다.</p>
+  </section>
+
+  <!-- ④ 해결·화면 -->
+  <section>
+    <h2><span class="num">02</span>해결·화면</h2>
+    <p>손님, 상인, 다른 손님 — 세 축이 서로를 검증하는 구조로 문제를 풀었습니다.</p>
+    <div class="flow-list">
+      <div class="flow-item">
+        <div class="flow-num">1</div>
+        <p><strong>검색·비교</strong> — 품목을 검색하면 매장별 가격이 kg당 단가로 정렬돼 화면 하나에 나란히 보입니다.</p>
+      </div>
+      <div class="flow-item">
+        <div class="flow-num">2</div>
+        <p><strong>상인 등록</strong> — 상인은 오픈채팅방에서 받은 당일 PIN으로 인증 후, 본인 가게 가격을 직접 등록·수정합니다.</p>
+      </div>
+      <div class="flow-item">
+        <div class="flow-num">3</div>
+        <p><strong>손님 검증</strong> — 실제 구매를 확인한 손님이 "가격 맞았어요 / 달라요" 리뷰를 남겨 그 가격의 신뢰도를 함께 쌓습니다.</p>
+      </div>
+    </div>
+    <div class="card" style="margin-top:18px;">
+      <h3>핵심 기능</h3>
+      <p>카테고리 탐색 · 오타 허용 검색 · 가격대/신선도/원산지 필터 · 평균가 대비 배지 · PIN 인증 가격 등록 · 영수증 인증 리뷰 · 찜하기·동선 안내 · 4개 언어(한·영·중·일) 지원</p>
+    </div>
+  </section>
+
+  <!-- ⑤ 내 역할 -->
+  <section>
+    <h2><span class="num">03</span>내 역할</h2>
+    <p>저는 (죽도시장 프로토타입에서 단순 총액 표시로는 실제 가격 비교가 어려운) 상황에서 (kg당 단가 표시로 바꾸는 방향을 판단·수행)했고, 그 결과 (손님이 매장별 시세를 한눈에 비교할 수 있는 가격 표시 방식)이 남았습니다.</p>
+    <div class="card">
+      <h3>단순 총액 표시 → kg당 단가 표시로 전환</h3>
+      <p>단순 총액 대신 kg당 단가로 바꿔 손님들이 쉽게 가격 비교를 할 수 있도록 했다.</p>
+    </div>
+    <div class="card">
+      <h3>가격비교 신뢰 구조 설계</h3>
+      <p>관광객이 죽도시장에서 합리적인 가격에 물건을 살 수 있도록, 상인이 직접 가격을 올리고, 손님이 직접 리뷰를 올림으로써 신뢰를 쌓을 수 있도록 했다. 또, 가격비교 서비스를 도입해서 손님들이 쉽게 가격을 비교할 수 있도록 했다.</p>
+    </div>
+    <p style="margin-top:14px;">AI가 짠 코드를 검수 없이 쓰지 않고, 지도 오검색·모달 텍스트 겹침·찜한 목록 탭 혼동 같은 문제들을 제가 직접 화면을 눌러보고 스크린샷을 확인하며 찾아 고쳤습니다.</p>
+  </section>
+
+  <!-- ⑥ 결과 -->
+  <section>
+    <h2><span class="num">04</span>결과</h2>
+    <p class="quote">"일반 사용자들은 자신이 관심있는 물품을 검색하고 가장 최신의 가격을 알 수 있다. 시장 상인들은 상인들에게만 공유된 비밀번호로 자신의 상품의 가격 및 상품 구성을 수정하여 올릴 수 있다."</p>
+    <div class="stat-strip">
+      <div><span class="num-lg">35+</span><span class="label">버전 반복</span></div>
+      <div><span class="num-lg">12</span><span class="label">관점별 혁신 기능</span></div>
+      <div><span class="num-lg">4</span><span class="label">지원 언어</span></div>
+      <div><span class="num-lg">0</span><span class="label">사용 백엔드</span></div>
+    </div>
+    <div class="example-box">
+      <strong>구체 사례</strong> — 오징어 한 품목만 놓고 봐도 5개 매장 가격(15,000원~42,000원)을 kg당 단가로 한 화면에서 바로 비교할 수 있게 됐고, 평균 대비 배지까지 자동으로 표시됩니다.
+    </div>
+  </section>
+
+  <p class="foot-note">이 페이지는 예시 데이터를 사용한 학습·기획용 포트폴리오 자료입니다.</p>
+
+</div>
+</body>
+</html>
