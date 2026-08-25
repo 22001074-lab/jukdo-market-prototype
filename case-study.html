@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>죽도시장 프로토타입 케이스 스터디</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700;900&family=Noto+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #F0EAE0;
+    --card: #FFFFFF;
+    --ink: #1F2937;
+    --ink-soft: #5B5348;
+    --navy: #14233A;
+    --accent: #FF6B2C;
+    --accent-deep: #C8501E;
+    --sea: #2563A6;
+    --line: #D9CFBE;
+    --good: #1F9254;
+    --good-bg: #E4F5EB;
+    --warn: #B4531E;
+    --warn-bg: #FBEEE3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #1A1714;
+      --card: #24201B;
+      --ink: #EDE7DC;
+      --ink-soft: #B8AE9C;
+      --navy: #EDE7DC;
+      --accent: #FF8A54;
+      --accent-deep: #FFA878;
+      --sea: #6FA8E0;
+      --line: #3A342C;
+      --good: #4FCB8A;
+      --good-bg: #163024;
+      --warn: #E0985E;
+      --warn-bg: #2E2216;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #1A1714;
+    --card: #24201B;
+    --ink: #EDE7DC;
+    --ink-soft: #B8AE9C;
+    --navy: #EDE7DC;
+    --accent: #FF8A54;
+    --accent-deep: #FFA878;
+    --sea: #6FA8E0;
+    --line: #3A342C;
+    --good: #4FCB8A;
+    --good-bg: #163024;
+    --warn: #E0985E;
+    --warn-bg: #2E2216;
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Noto Sans KR", "Malgun Gothic", sans-serif;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+
+  .wrap { max-width: 760px; margin: 0 auto; padding: 56px 24px 100px; }
+
+  a { color: var(--sea); }
+  a:focus-visible, button:focus-visible { outline: 2.5px solid var(--sea); outline-offset: 3px; border-radius: 3px; }
+
+  /* ---- Header ---- */
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: "IBM Plex Mono", monospace; font-size: 12px; font-weight: 600;
+    letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent-deep);
+    margin-bottom: 18px;
+  }
+  .eyebrow::before { content: ""; width: 18px; height: 2px; background: var(--accent); flex-shrink: 0; }
+  h1 {
+    font-family: "Noto Serif KR", serif; font-weight: 900; color: var(--navy);
+    font-size: clamp(30px, 6vw, 44px); line-height: 1.25; letter-spacing: -0.01em;
+    text-wrap: balance; margin: 0 0 14px;
+  }
+  .subtitle { font-size: 17px; color: var(--ink-soft); max-width: 58ch; margin: 0 0 28px; }
+  .meta-row {
+    display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center;
+    padding-top: 20px; border-top: 1.5px solid var(--line);
+    font-size: 13.5px; color: var(--ink-soft);
+  }
+  .meta-row .meta-item { display: flex; align-items: center; gap: 6px; }
+  .meta-row strong { color: var(--ink); font-weight: 600; }
+  .cta-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px; text-decoration: none;
+    font-size: 14.5px; font-weight: 700; padding: 11px 18px; border-radius: 10px;
+    border: 1.5px solid transparent; transition: transform 0.12s ease, background 0.12s ease;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn.primary { background: var(--accent); color: #fff; }
+  .btn.primary:hover { background: var(--accent-deep); }
+  .btn.ghost { background: var(--card); color: var(--ink); border-color: var(--line); }
+
+  /* ---- Receipt-style summary strip ---- */
+  .receipt {
+    margin: 44px 0 52px; background: var(--card); border: 1.5px solid var(--line); border-radius: 14px;
+    padding: 22px 24px; box-shadow: 0 1px 0 rgba(0,0,0,0.02);
+  }
+  .receipt-title {
+    font-family: "IBM Plex Mono", monospace; font-size: 11.5px; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--ink-soft); margin: 0 0 14px;
+  }
+  .receipt-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 18px 16px;
+  }
+  .receipt-item .num {
+    font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums;
+    font-size: 26px; font-weight: 600; color: var(--navy); display: block; line-height: 1.1;
+  }
+  .receipt-item .label { font-size: 12.5px; color: var(--ink-soft); margin-top: 4px; }
+
+  /* ---- Sections ---- */
+  section { margin: 56px 0; }
+  h2 {
+    font-family: "Noto Serif KR", serif; font-weight: 700; color: var(--navy);
+    font-size: 23px; margin: 0 0 18px; text-wrap: balance;
+  }
+  p { margin: 0 0 14px; max-width: 68ch; }
+  .lede { font-size: 16px; color: var(--ink-soft); }
+
+  /* ---- Feature cards ---- */
+  .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+  .feature-card {
+    background: var(--card); border: 1.5px solid var(--line); border-radius: 12px; padding: 18px 20px;
+  }
+  .feature-card .ftag {
+    display: inline-block; font-family: "IBM Plex Mono", monospace; font-size: 10.5px; font-weight: 600;
+    letter-spacing: 0.05em; text-transform: uppercase; color: var(--sea); background: color-mix(in srgb, var(--sea) 12%, transparent);
+    padding: 3px 8px; border-radius: 6px; margin-bottom: 10px;
+  }
+  .feature-card h3 { font-size: 15.5px; font-weight: 700; margin: 0 0 6px; color: var(--ink); }
+  .feature-card p { font-size: 14px; color: var(--ink-soft); margin: 0; max-width: none; }
+
+  /* ---- Timeline ---- */
+  .timeline { position: relative; padding-left: 28px; }
+  .timeline::before {
+    content: ""; position: absolute; left: 6px; top: 6px; bottom: 6px; width: 2px; background: var(--line);
+  }
+  .tl-item { position: relative; padding-bottom: 26px; }
+  .tl-item:last-child { padding-bottom: 0; }
+  .tl-item::before {
+    content: ""; position: absolute; left: -28px; top: 4px; width: 11px; height: 11px; border-radius: 50%;
+    background: var(--card); border: 2.5px solid var(--accent);
+  }
+  .tl-version {
+    font-family: "IBM Plex Mono", monospace; font-size: 12px; font-weight: 600; color: var(--accent-deep);
+    margin-bottom: 3px;
+  }
+  .tl-title { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+  .tl-desc { font-size: 14px; color: var(--ink-soft); max-width: 60ch; }
+
+  /* ---- Issue list ---- */
+  .issue-list { display: flex; flex-direction: column; gap: 12px; }
+  .issue {
+    display: flex; gap: 12px; background: var(--card); border: 1.5px solid var(--line); border-radius: 12px;
+    padding: 14px 16px;
+  }
+  .issue .sev {
+    flex-shrink: 0; font-family: "IBM Plex Mono", monospace; font-size: 10px; font-weight: 700;
+    letter-spacing: 0.04em; text-transform: uppercase; padding: 3px 8px; border-radius: 6px; height: fit-content;
+  }
+  .issue .sev.high { background: var(--warn-bg); color: var(--warn); }
+  .issue .sev.low { background: var(--good-bg); color: var(--good); }
+  .issue-body h3 { font-size: 14.5px; margin: 0 0 4px; font-weight: 700; }
+  .issue-body p { font-size: 13.5px; color: var(--ink-soft); margin: 0; max-width: none; }
+
+  /* ---- Stack ---- */
+  .stack-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .stack-chip {
+    font-family: "IBM Plex Mono", monospace; font-size: 12.5px; font-weight: 600; color: var(--ink);
+    background: var(--card); border: 1.5px solid var(--line); padding: 6px 12px; border-radius: 999px;
+  }
+
+  /* ---- Footer CTA ---- */
+  .footer-cta {
+    margin-top: 64px; padding: 30px 26px; border-radius: 16px; background: var(--navy);
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 18px;
+  }
+  :root:not([data-theme="dark"]) .footer-cta { background: var(--navy); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .footer-cta { background: #0E1A2C; } }
+  :root[data-theme="dark"] .footer-cta { background: #0E1A2C; }
+  .footer-cta .ftxt h2 { color: #F4EFE6; margin-bottom: 4px; }
+  .footer-cta .ftxt p { color: #B9C4D2; margin: 0; }
+  .footer-cta .btn.primary { flex-shrink: 0; }
+
+  .foot-note { margin-top: 28px; font-size: 12.5px; color: var(--ink-soft); text-align: center; }
+
+  @media (max-width: 520px) {
+    .wrap { padding: 40px 18px 80px; }
+    .footer-cta { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">케이스 스터디 · Four항</div>
+    <h1>죽도시장 가격비교 프로토타입</h1>
+    <p class="subtitle">관광객이 죽도시장에서 합리적인 가격에 물건을 살 수 있도록, 상인의 실시간 가격 등록과 손님의 리뷰로 신뢰를 쌓는 가격비교 서비스를 기획부터 35회 이상의 반복 개발까지 끌고 온 기록입니다.</p>
+    <div class="meta-row">
+      <span class="meta-item">📍 <strong>경북 포항 죽도시장</strong></span>
+      <span class="meta-item">🗓 <strong>2026.08</strong> · 지역혁신프로젝트 6강</span>
+      <span class="meta-item">👥 <strong>한대성 · 배예령 · 마수현 · 김민성 · 준호</strong></span>
+    </div>
+    <div class="cta-row">
+      <a class="btn primary" href="https://22001074-lab.github.io/jukdo-market-prototype/" target="_blank" rel="noopener">라이브 데모 열기 →</a>
+      <a class="btn ghost" href="https://github.com/22001074-lab/jukdo-market-prototype" target="_blank" rel="noopener">소스 보기</a>
+    </div>
+  </header>
+
+  <div class="receipt">
+    <div class="receipt-title">프로젝트 · 한눈에</div>
+    <div class="receipt-grid">
+      <div class="receipt-item"><span class="num">35+</span><span class="label">버전 반복</span></div>
+      <div class="receipt-item"><span class="num">4</span><span class="label">관점 시뮬레이션</span></div>
+      <div class="receipt-item"><span class="num">12</span><span class="label">v35 신규 혁신 기능</span></div>
+      <div class="receipt-item"><span class="num">4</span><span class="label">지원 언어(한·영·중·일)</span></div>
+      <div class="receipt-item"><span class="num">0</span><span class="label">사용 백엔드(순수 프론트엔드)</span></div>
+    </div>
+  </div>
+
+  <section>
+    <h2>문제 — 왜 시작했나</h2>
+    <p class="lede">"20대 관광객 배예령씨는 시장에 갈 때 상품들의 가격을 제대로 알지 못하는 상태로 가는 것이 불편하다."</p>
+    <p>전통시장에서는 같은 품목이라도 매대마다 가격이 다르고, 관광객이 그 자리에서 "이 가격이 정상인가?"를 확인할 방법이 없습니다. 이 프로토타입은 이 한 문장의 불편에서 출발했습니다.</p>
+  </section>
+
+  <section>
+    <h2>과정 — 어떻게 만들었나</h2>
+    <p>"시장 상인과 구매자가 상품에 대해 가격을 입력할 수 있다. 이를 통해 시장의 상품 가격을 알 수 있다."</p>
+    <p>이 구조를 실제로 작동하게 만들기 위해, 세 명의 이해관계자를 동시에 만족시키는 방식으로 설계했습니다 — <strong>손님</strong>은 검색 한 번으로 매장별 가격을 비교하고, <strong>상인</strong>은 오픈채팅방으로 받은 당일 인증 PIN으로 본인 가격을 직접 등록하며, <strong>다른 손님들</strong>은 영수증 인증 후 남긴 리뷰로 그 가격이 실제로 맞는지 서로 검증합니다.</p>
+  </section>
+
+  <section>
+    <h2>AI 활용 — 맡긴 것과 검증한 것</h2>
+    <p>웹사이트의 기초적인 뼈대는 AI(Claude)에게 요청 사항을 구체적으로 지시해 생성하게 했습니다. 대신 그 결과를 그대로 쓰지 않고, <strong>직접 화면을 클릭하며 실사용 테스트</strong>를 거쳐 검증했습니다 — 지도 오검색, 모달 텍스트 겹침, 찜한 목록 탭 혼동, 매장 중복 생성 위험 같은 문제들은 코드를 눈으로 훑어서가 아니라 실제로 눌러보고 스크린샷을 확인하며 찾아낸 것들입니다. AI가 짠 코드를 검수 없이 배포하지 않고, "정말 저 흐름대로 동작하는가"를 팀이 직접 확인하는 과정을 반복했습니다.</p>
+  </section>
+
+  <section>
+    <h2>팀 협업 — 6강 고도화 우선순위표</h2>
+    <p class="lede">"기준 없이 고치면 색상만 종일 만집니다. 필수부터 처리합니다." — 팀이 정한 원칙대로, 개선 항목을 필수/사용성/나중으로 나누고 담당을 명확히 나눠 처리했습니다.</p>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <span class="ftag">필수</span>
+        <h3>kg당 가격 표시로 전환</h3>
+        <p>단순 총액 대신 kg당 단가로 바꿔 실제 시세 비교가 가능하게 함 — 담당 한대성</p>
+      </div>
+      <div class="feature-card">
+        <span class="ftag">필수</span>
+        <h3>"폰 속의 폰" 어색함 수정</h3>
+        <p>실제 모바일 브라우저에서 폰 목업 틀 없이 화면 전체를 꽉 채우도록 개선 — 담당 배예령</p>
+      </div>
+      <div class="feature-card">
+        <span class="ftag">사용성</span>
+        <h3>택배 가능 여부 표시</h3>
+        <p>매장별 택배 가능 여부를 필터·상세 정보에 노출 — 담당 마수현</p>
+      </div>
+      <div class="feature-card">
+        <span class="ftag">사용성</span>
+        <h3>리뷰 버튼 중복 클릭 방지</h3>
+        <p>"가격 맞아요/달라요" 버튼의 중복 투표를 막아 데이터 신뢰도를 지킴 — 담당 김민성</p>
+      </div>
+      <div class="feature-card">
+        <span class="ftag">사용성</span>
+        <h3>4개 언어 지원</h3>
+        <p>한국어·영어·중국어·일본어 UI를 추가해 외국인 관광객 접근성을 높임 — 담당 준호</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>기본 기능</h2>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <span class="ftag">탐색</span>
+        <h3>카테고리 · 오타 허용 검색</h3>
+        <p>해산물·과일·나물·목공예 등 큰 카테고리로 먼저 둘러보고, 오타나 유사어("낙지"→"문어")로 검색해도 원하는 품목을 찾아줍니다.</p>
+      </div>
+      <div class="feature-card">
+        <span class="ftag">비교</span>
+        <h3>가격 목록 · 필터 · 정렬</h3>
+        <p>가격대·신선도·손질 정도·원산지 필터와 4가지 정렬 기준으로 매장별 가격을 비교하고, 평균 대비 위치·이상치 경고·전일 대비 변동을 배지로 바로 확인합니다.</p>
+      </div>
+      <div class="feature-card">
+        <span class="ftag">신뢰</span>
+        <h3>PIN 인증 상인 가격 등록</h3>
+        <p>상인 전용 오픈채팅방에서 매일 공지되는 4자리 PIN으로 본인 인증 후, 본인 가게의 품목별·수량별 가격을 표 형태로 한 번에 관리합니다.</p>
+      </div>
+      <div class="feature-card">
+        <span class="ftag">신뢰</span>
+        <h3>영수증 인증 리뷰</h3>
+        <p>실제 구매를 확인한 손님만 "가격 맞았어요 / 달라요"를 남길 수 있게 해, 아무나 남기는 리뷰보다 신뢰도 높은 데이터를 쌓습니다.</p>
+      </div>
+      <div class="feature-card">
+        <span class="ftag">편의</span>
+        <h3>찜하기 · 동선 안내</h3>
+        <p>마음에 든 가격을 찜해두고, 구역 번호 순서로 정렬해 찜한 가게를 도는 동선을 짧게 만들 수 있습니다.</p>
+      </div>
+      <div class="feature-card">
+        <span class="ftag">접근성</span>
+        <h3>다국어 · 지도 · 터치 타겟</h3>
+        <p>4개 언어 UI, 실제 시장 위치 지도·길찾기 링크, 그리고 표준 최소 터치 타겟(44px) 기준에 맞춘 버튼 크기로 접근성을 다졌습니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>v35 — 4가지 관점 시뮬레이션이 낳은 혁신 기능</h2>
+    <p class="lede">"손님이라면", "상인이라면", "외국인 관광객이라면", "시장 전체를 운영한다면" — 네 가지 입장에서 각각 무엇이 아쉬울지를 시뮬레이션해 12개 기능으로 구체화했습니다.</p>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <span class="ftag">손님 관점</span>
+        <h3>목표가 알리미</h3>
+        <p>품목에 "이 가격 이하면 알려줘" 기준을 걸어두면, 조건을 만족하는 매장이 나타났을 때 배너로 바로 알려줍니다.</p>
+      </div>
+      <div class="feature-card">
+        <span class="ftag">손님 관점</span>
+        <h3>장보기 최적 플랜</h3>
+        <p>찜한 품목들을 각각 지금 제일 싼 매장 기준으로 묶어, 매장별 소계와 전체 예상 총액을 한 번에 보여줍니다.</p>
+      </div>
+      <div class="feature-card">
+        <span class="ftag">손님 관점</span>
+        <h3>나의 시장 요약</h3>
+        <p>좋아요·비교함·동선 완주 체크·예상 총액을 한 카드로 모아 정리하고, 텍스트로 복사해 공유할 수 있습니다.</p>
+      </div>
+      <div class="feature-card">
+        <span class="ftag">외국 관광객</span>
+        <h3>문구집 음성 재생</h3>
+        <p>"이 가격 맞아요?" 같은 한국어 문장을 눌러서 들어보고, 상인에게 화면을 보여주며 소통할 수 있습니다.</p>
+      </div>
+      <div class="feature-card">
+        <span class="ftag">외국 관광객</span>
+        <h3>4개 언어 · 다중 통화 환산</h3>
+        <p>언어를 일본어·중국어로 바꾸면 그에 맞는 통화 환산까지 함께 보여주도록 확장했습니다.</p>
+      </div>
+      <div class="feature-card">
+        <span class="ftag">상인 관점</span>
+        <h3>내 가게 성과 요약판</h3>
+        <p>가격 관리 표를 열자마자 우리 가게의 리뷰 신뢰도와 최근 손님 후기를 요약해서 보여줍니다.</p>
+      </div>
+      <div class="feature-card">
+        <span class="ftag">상인 관점</span>
+        <h3>실시간 가격 입력 힌트</h3>
+        <p>가격을 입력하는 그 자리에서, 타이핑하는 순간 바로 다른 매장 시세 대비 위치(낮음/비슷/높음) 배지를 보여줍니다.</p>
+      </div>
+      <div class="feature-card">
+        <span class="ftag">시장 전체</span>
+        <h3>실시간 소식 · 오늘의 특가 · 신뢰 랭킹</h3>
+        <p>시장 전체 관점의 새 화면 3종을 탭 하나로 묶어, 시장 전체의 오늘 상황을 한눈에 보여줍니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>개발 타임라인</h2>
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-version">V1</div>
+        <div class="tl-title">시작 화면 프로토타입</div>
+        <div class="tl-desc">한 줄 소개 + 검색창 + CTA 버튼만 있는 정적 시작 화면에서 출발. 흰 배경에 포인트 컬러 하나만 쓰는 원칙을 세움.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-version">V2–V10</div>
+        <div class="tl-title">골격 구성 + PIN 인증 + 리뷰 신뢰 구조</div>
+        <div class="tl-desc">정렬·검색·가격 목록으로 기본 골격을 잡은 뒤, PRD로 먼저 정의한 상인 PIN 인증 가격 등록과 손님 리뷰를 구현. QR 스캔 대신 오픈채팅방 PIN 방식으로 방향을 전환.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-version">V11–V15</div>
+        <div class="tl-title">신뢰도 강화 + 실사용 방지책</div>
+        <div class="tl-desc">평균가 대비 배지, 실물 사진 첨부가 추가되고, 이름을 줄여 쳐도 중복 가게가 실수로 생기지 않도록 확인 단계를 추가함.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-version">V17–V20</div>
+        <div class="tl-title">접근성 개선 1차 + 가격 변동 인사이트</div>
+        <div class="tl-desc">터치 타겟을 표준 44px 기준으로 키우고, 이상치 경고 칩·전일 대비 변동 칩·가격 추이 스파크라인·동선(길찾기) 모달을 도입.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-version">V22–V27</div>
+        <div class="tl-title">다국어 확장 + 관점별 코드 리뷰</div>
+        <div class="tl-desc">4개 언어 지원과 지도 연동을 마친 뒤, "손님 관점", "상인 관점", "외국 관광객 관점" 리뷰를 각각 돌며 버그와 접근성 문제를 체계적으로 찾아 수정.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-version">V29–V32</div>
+        <div class="tl-title">공유 버전 도입 + 시장 전체 관점 신설</div>
+        <div class="tl-desc">읽기 전용 공유 상태 배너를 만들어 다른 사람과 안전하게 공유할 수 있게 하고, 실시간 소식·오늘의 특가·신뢰 랭킹을 묶은 "시장 전체" 관점 화면을 새로 만듦.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-version">V33–V34</div>
+        <div class="tl-title">동선 시각화 + 매장 비교함</div>
+        <div class="tl-desc">찜한 가게를 잇는 동선을 실제 매대 배치를 반영한 지도 그래픽으로 보여주고, 매장을 최대 3개까지 담아 표로 나란히 비교하는 기능을 추가.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-version">V35</div>
+        <div class="tl-title">4가지 관점 시뮬레이션 · 공유 배포</div>
+        <div class="tl-desc">3000회 시뮬레이션 기반으로 손님·상인·외국 관광객·시장 전체 관점의 혁신 기능 12종을 완성하고, GitHub Pages로 공개 배포.</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>결과 — 무엇이 남았나</h2>
+    <p>"일반 사용자들은 자신이 관심있는 물품을 검색하고 가장 최신의 가격을 알 수 있다. 시장 상인들은 상인들에게만 공유된 비밀번호로 자신의 상품의 가격 및 상품 구성을 수정하여 올릴 수 있다."</p>
+    <p>이 목표는 v35 시점에 단순 검색·등록을 넘어, 목표가 알리미·장보기 최적 플랜·실시간 가격 힌트 같은 기능으로 확장되어 구현되어 있습니다.</p>
+  </section>
+
+  <section>
+    <h2>남은 한계 · 다음 단계</h2>
+    <p class="lede">"비밀번호로만 상품 추가·삭제·수정 등을 할 수 있는 화면에 들어가는 기능이며, 실제 상인들이 협조하여 상품의 가격을 업로드 할지 의문이다." — 팀이 스스로 짚은 한계입니다. 여기에 직접 써보며 찾은 사항을 더했습니다.</p>
+    <div class="issue-list">
+      <div class="issue">
+        <span class="sev high">우선</span>
+        <div class="issue-body">
+          <h3>실제 상인 참여 유도가 검증되지 않음</h3>
+          <p>PIN 인증 구조는 완성됐지만, 실제 상인들이 매일 가격을 직접 입력해줄지는 아직 실증되지 않은 가정임.</p>
+        </div>
+      </div>
+      <div class="issue">
+        <span class="sev high">우선</span>
+        <div class="issue-body">
+          <h3>찜한 목록 기본 탭 혼동</h3>
+          <p>가격을 찜하면 배지엔 바로 반영되지만, 목록을 열면 기본 탭("찜한 가게")이 비어 보여 찜이 안 된 것처럼 오해할 수 있음.</p>
+        </div>
+      </div>
+      <div class="issue">
+        <span class="sev low">낮음</span>
+        <div class="issue-body">
+          <h3>환율 환산 고정값 · 백엔드 미연동</h3>
+          <p>원화→환율 환산이 2026년 8월 기준 고정값이고, PIN·리뷰·가격 데이터는 새로고침 시 초기화되는 세션 메모리 상태 — 실서비스 전환에는 환율 API와 백엔드 연동이 필요함.</p>
+        </div>
+      </div>
+      <div class="issue">
+        <span class="sev low">낮음</span>
+        <div class="issue-body">
+          <h3>지도 서비스 전환 검토</h3>
+          <p>현재 Google Maps iframe을 사용 중이며, 카카오맵으로 바꾸려면 Kakao Developers에서 발급받은 JavaScript 앱 키가 필요함.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>기술 스택</h2>
+    <p>백엔드 없이 <strong>단일 HTML 파일</strong>(인라인 CSS·JS)로 만든 정적 프로토타입입니다. 빠르게 반복하고 바로 눈으로 확인하는 것을 우선한 선택입니다.</p>
+    <div class="stack-row">
+      <span class="stack-chip">HTML5</span>
+      <span class="stack-chip">CSS3</span>
+      <span class="stack-chip">Vanilla JS</span>
+      <span class="stack-chip">Web Speech API</span>
+      <span class="stack-chip">Google Maps Embed</span>
+      <span class="stack-chip">GitHub Pages</span>
+      <span class="stack-chip">4개국어 i18n (자체 구현)</span>
+    </div>
+  </section>
+
+  <div class="footer-cta">
+    <div class="ftxt">
+      <h2>지금 바로 써보기</h2>
+      <p>실제 배포된 프로토타입을 브라우저에서 바로 확인할 수 있습니다.</p>
+    </div>
+    <a class="btn primary" href="https://22001074-lab.github.io/jukdo-market-prototype/" target="_blank" rel="noopener">라이브 데모 열기 →</a>
+  </div>
+
+  <p class="foot-note">이 페이지와 프로토타입은 예시 데이터를 사용한 학습·기획용 케이스 스터디입니다.</p>
+
+</div>
+</body>
+</html>
